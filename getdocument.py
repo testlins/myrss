@@ -5,6 +5,7 @@ import time
 import os
 import urllib2
 import re
+import threading
 from sgmllib import SGMLParser  
 class Getdocument(SGMLParser):  
     """抓取主题分组、时间、提示 和 详细内容网址"""
@@ -35,10 +36,12 @@ class Getdocument(SGMLParser):
         #获取发表时间
         elif self.getupdatetime:
             content = [v for k, v in attrs if k == "content"][0]
-            #
-            strp = re.compile('(.*)\+.*')
-            updatetime = re.findall(strp,content)
-            self.documenthead.extend(updatetime)
+            #由于部分页面没有记录毫秒 导致报错 所以干脆只取到秒
+#            strp = re.compile('(.*)\..*')
+#            updatetime = re.findall(strp,content)
+            updatetime = content[:19]
+#            print updatetime
+            self.documenthead.append(updatetime)
 #            print content,updatetime
     
     def start_title(self, attrs):
@@ -93,22 +96,102 @@ class dodocument(object):
                 pagedata = urllib2.urlopen(req).read()
                 lister = Getdocument()
                 lister.feed(pagedata)
-                db.updatehead(site[0],lister.documenthead)
-                print site[0]
+#                print site[0]
+                if len(lister.documenthead)==3:
+                    db.updatehead(site[0],lister.documenthead)
+                else:
+                    #处理重定向页面
+                    print 'analysis error %s'%site[0]
+                    db.updateerrorflag(site[0])
+#                print site[0]
 #                sitelist.remove(site)
             sitelist = db.selecttop10()
-                
-                
+            
+    def inserthead2(self):
+            #多线程版
+            db = self.db
+            threads = []
+            headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'}        
+            sitelist = db.selecttop10()
+            while len(sitelist)>0:
+                del threads[:]
+                for site in sitelist:
+                    print site
+                    
+                    my_thread = MyThread(site)
+#                    g_mutex.acquire()
+                    time.sleep(0.05)
+                    my_thread.start()
+                    threads.append(my_thread)
+                for t in threads:
+                    t.join(1)
+#                    g_mutex.release()
+
+                time.sleep(0.2)
+                sitelist = db.selecttop10()
+    
+class MyThread(threading.Thread):  
+    def __init__(self,site):  
+        threading.Thread.__init__(self)  
+        self.site = site
+
+
+            
+#        self.db = model.myrss()
+
+    def run(self):
+
+        try:
+            site = self.site[0]
+        except Exception,msg:
+            print msg
+            return
+        self.inserttest(site)
+#        g_mutex = threading.Lock() 
+#        print site
+
+    def inserttest(self,site):
+        db =  model.myrss()
+        headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'}                
+        try:
+            req = urllib2.Request(site, headers= headers)
+            pagedata = urllib2.urlopen(req).read()
+        except Exception,msg:
+            print msg
+            return
+    
+        lister = Getdocument()
+        lister.feed(pagedata)
+#        print lister.documenthead
+        
+#        g_mutex.acquire()
+        try:
+            if len(lister.documenthead)==3:
+                db.updatehead(site,lister.documenthead)
+            else:
+             #处理重定向页面
+#            print 'analysis error %s'%site[0]
+                db.updateerrorflag(site)
+        except Exception,msg:
+            print msg
+#        g_mutex.release()
+         
+
+    
             
         
 
 
 if __name__ == "__main__": 
+    global g_mutex
+    g_mutex= threading.Lock() 
+    print time.ctime()
     test1 = dodocument()
-    test1.inserthead()
+    test1.inserthead2()
+    print time.ctime()
      
 #
-#starturl = 'http://www.guokr.com/article/437749/'     
+#starturl = 'http://mooc.guokr.com/opinion/437339/'     
 #headers = {'User-Agent':'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.1.6) Gecko/20091201 Firefox/3.5.6'}
 #req = urllib2.Request(starturl, headers= headers)
 #pagedata = urllib2.urlopen(req).read()
