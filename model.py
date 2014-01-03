@@ -45,6 +45,70 @@ class myrss(object):
         qs =cu.fetchall()
         cu.close()
         return qs
+
+#    def selectpagedata(self,pageid):
+#        #供界面数据 按时间逆序 每次10个
+#        cu = iddb.cursor()
+#        cu.execute('select "title","group","addtime","notes" from theme where "flag"=1 order by "addtime" desc limit ?,10',(pageid,))
+##        cu.execute('select "title","group","addtime","notes" from theme where "flag"=1 and ("group"= ? or "group" is null) order by "addtime" desc limit ?,10',(group,pageid,))
+#
+#        qs =cu.fetchall()
+#        cu.close()
+#        return qs
+
+    def selectpagedata(self,initid,group= '',title= '',starttime= '',endtime= ''):
+        #供界面数据 按时间逆序 每次10个
+        exsql = 'select "title","group","addtime","notes" from theme where "flag"=1'
+        if group != '':
+            exsql += ' and "group"="%s"'%group
+        elif title != '':
+            exsql += ' and "title" like "%%%s%%"'%title
+        elif starttime != '' and endtime != '':
+#            starttime = datetime.datetime.strftime(starttime,"%Y/%m/%d")+' 00:00'
+#            endtime = datetime.datetime.strftime(endtime,"%Y/%m/%d")+' 23:59:59'
+            starttime = starttime+' 00:00'
+            endtime = endtime+' 23:59:59'
+            exsql += ' and "addtime" between "%s" and "%s"'%(starttime,endtime)
+        exsql += ' order by "addtime" desc limit %d,10'%initid
+#        print exsql
+
+        cu = iddb.cursor()
+        cu.execute(exsql)
+#        cu.execute('select "title","group","addtime","notes" from theme where "flag"=1 and ("group"= ? or "group" is null) order by "addtime" desc limit ?,10',(group,pageid,))
+
+        qs =cu.fetchall()
+        cu.close()
+        return qs
+
+    def selectinittime(self):
+        #供界面时间数据 最大最小有效数据
+        cu = iddb.cursor()
+        cu.execute('SELECT min(addtime),max(addtime) FROM theme where flag =1')
+        qs =cu.fetchone()
+        cu.close()
+        return qs
+
+    
+    def selectthemecount(self,group='',title='',starttime='',endtime=''):
+        #计算有效主题数
+#        print group,title,starttime,endtime
+        exsql = 'select count("title") from theme where "flag"=1'
+        if group != '':
+            exsql += ' and "group"="%s"'%group
+        elif title != '':
+            exsql += ' and "title" like "%%%s%%"'%title
+        elif starttime != '' and endtime != '':
+#            starttime = datetime.datetime.strftime(starttime,"%Y/%m/%d")+' 00:00'
+#            endtime = datetime.datetime.strftime(endtime,"%Y/%m/%d")+' 23:59:59'   
+            starttime = starttime+' 00:00'
+            endtime = endtime+' 23:59:59'
+            exsql += ' and "addtime" between "%s" and "%s"'%(starttime,endtime)
+        cu = iddb.cursor()
+        cu.execute(exsql)
+        qs =cu.fetchone()
+        cu.close()
+        return qs
+    
     
     def updatehead(self,href,headlist):
         cu = iddb.cursor()
@@ -76,6 +140,6 @@ if __name__ == '__main__':
     print theme
     x=myrss()
 #    print x.selecttheme(theme)
-    print x.selecttop10()
-    x.updatehead(theme,headlist)
+#    print x.selecttop10()
+    print x.selectpagedata(10,None,'为什么',None,None)
 
