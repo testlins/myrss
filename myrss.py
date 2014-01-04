@@ -62,6 +62,7 @@ class TestDialog(QMainWindow,QDialog):
 #        pageid = self.pageid
         if self.query:
             #传入时间参数 传string类型
+#            print self.mainUi.parttitle.text()
             pagedata =  db.selectpagedata(self.queryid,self.mainUi.grouplist.currentText(),\
                         self.mainUi.parttitle.text(),self.mainUi.starttime.text(),self.mainUi.endtime.text())
         else:
@@ -85,28 +86,30 @@ class TestDialog(QMainWindow,QDialog):
 
             
     def prepage(self):
-        if self.query:
-            if self.queryid==10:
+        if self.queryid==10 or self.pageid==10:
                 print u'没有上一页'
-            else:
-                self.queryid -= 20
-                self.mainUi.tableWidget.clearContents()            
-                self.loadtable()
+        elif self.query:
+            self.queryid -= 20
+            self.mainUi.tableWidget.clearContents()            
+            self.loadtable()
         else:
-            if self.pageid==10:
-                print u'没有上一页'
-            else:
-                #显示上一页 既显示前十条 开始id应该从前二十开始
-                self.pageid -= 20
-                self.mainUi.tableWidget.clearContents()            
-                self.loadtable()
+            #显示上一页 既显示前十条 开始id应该从前二十开始
+            self.pageid -= 20
+            self.mainUi.tableWidget.clearContents()            
+            self.loadtable()
+        
 
     def nextpage(self):
-        if self.pageid >= self.themecount:
+        #bug4 查询后点击下一页无响应
+        if self.queryid >= self.themecount or self.pageid >= self.themecount:
             print u'没有下一页'
-        else:
-            self.mainUi.tableWidget.clearContents()
-            self.loadtable()
+            return
+#        elif  self.pageid >= self.themecount:
+#            print u'没有下一页'
+#            return
+        
+        self.mainUi.tableWidget.clearContents()
+        self.loadtable()
 
     def startpage(self):
         if self.query:
@@ -129,18 +132,22 @@ class TestDialog(QMainWindow,QDialog):
 
 
     def resetcont(self):
-        self.mainUi.starttime.setDate(self.starttime)
-        self.mainUi.endtime.setDate(self.endtime)
-        self.mainUi.parttitle.clear()
-        self.mainUi.grouplist.clear()
-        self.mainUi.tableWidget.clearContents()
+        #bug5 增加判断条件，解决非首页，直接点击重置跳页问题
+        if self.query:
+            self.mainUi.starttime.setDate(self.starttime)
+            self.mainUi.endtime.setDate(self.endtime)
+            self.mainUi.parttitle.clear()
+            self.mainUi.grouplist.clear()
+            self.mainUi.tableWidget.clearContents()
 
-        self.themecount = self.db.selectthemecount()[0]-1
-#        self.queryid = 0#querycont重置了 这里不用
-        #保持查询前的数据
-        self.pageid -=10
-        self.query = False
-        self.loadtable()
+            self.themecount = self.db.selectthemecount()[0]-1
+            self.queryid = 0#bug4
+            #保持查询前的数据
+            self.pageid -=10
+            self.query = False
+            self.loadtable()
+        else:
+            return
 
     def querycont(self):
         self.query = True

@@ -57,12 +57,13 @@ class myrss(object):
 #        return qs
 
     def selectpagedata(self,initid,group= '',title= '',starttime= '',endtime= ''):
-        #供界面数据 按时间逆序 每次10个
+        #供界面数据 按时间逆序 每次10个 
         exsql = 'select "title","group","addtime","notes" from theme where "flag"=1'
         if group != '':
             exsql += ' and "group"="%s"'%group
-        elif title != '':
-            exsql += ' and "title" like "%%%s%%"'%title
+        #str(title).strip()清除空格
+        elif str(title).strip() != '':
+            exsql += ' and "title" like "%%%s%%"'%str(title).strip()
         elif starttime != '' and endtime != '':
 #            starttime = datetime.datetime.strftime(starttime,"%Y/%m/%d")+' 00:00'
 #            endtime = datetime.datetime.strftime(endtime,"%Y/%m/%d")+' 23:59:59'
@@ -70,7 +71,7 @@ class myrss(object):
             endtime = endtime+' 23:59:59'
             exsql += ' and "addtime" between "%s" and "%s"'%(starttime,endtime)
         exsql += ' order by "addtime" desc limit %d,10'%initid
-#        print exsql
+        print exsql
 
         cu = iddb.cursor()
         cu.execute(exsql)
@@ -92,11 +93,12 @@ class myrss(object):
     def selectthemecount(self,group='',title='',starttime='',endtime=''):
         #计算有效主题数
 #        print group,title,starttime,endtime
+#        print str(title).strip()
         exsql = 'select count("title") from theme where "flag"=1'
         if group != '':
             exsql += ' and "group"="%s"'%group
-        elif title != '':
-            exsql += ' and "title" like "%%%s%%"'%title
+        elif str(title).strip() != '':
+            exsql += ' and "title" like "%%%s%%"'%str(title).strip()
         elif starttime != '' and endtime != '':
 #            starttime = datetime.datetime.strftime(starttime,"%Y/%m/%d")+' 00:00'
 #            endtime = datetime.datetime.strftime(endtime,"%Y/%m/%d")+' 23:59:59'   

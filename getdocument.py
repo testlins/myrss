@@ -116,18 +116,21 @@ class dodocument(object):
             while len(sitelist)>0:
                 del threads[:]
                 for site in sitelist:
-                    print site
+#                    print site
                     
                     my_thread = MyThread(site)
 #                    g_mutex.acquire()
-                    time.sleep(0.05)
+                    time.sleep(0.03)
                     my_thread.start()
                     threads.append(my_thread)
+                #和my_thread.start()有什么区别
+#                for t in threads:
+#                    t.start()
                 for t in threads:
                     t.join(1)
 #                    g_mutex.release()
 
-                time.sleep(0.2)
+                time.sleep(1)
                 sitelist = db.selecttop10()
     
 class MyThread(threading.Thread):  
