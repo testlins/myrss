@@ -55,23 +55,36 @@ class myrss(object):
 #        qs =cu.fetchall()
 #        cu.close()
 #        return qs
+    def strhand(self,s):
+        #清除部分sql特殊字符 用|做escape字符，后面发现其他字符再添加
+        s = str(s)
+        s = s.strip()
+        #escape字符要先转换
+        s = s.replace('|','||')
+        s = s.replace('%','|%')
+        s = s.replace('"','""')
+        return s
+        
+
+                
 
     def selectpagedata(self,initid,group= '',title= '',starttime= '',endtime= ''):
         #供界面数据 按时间逆序 每次10个 
         exsql = 'select "title","group","addtime","notes" from theme where "flag"=1'
         if group != '':
             exsql += ' and "group"="%s"'%group
-        #str(title).strip()清除空格
-        elif str(title).strip() != '':
-            exsql += ' and "title" like "%%%s%%"'%str(title).strip()
-        elif starttime != '' and endtime != '':
+        if starttime != '' and endtime != '':
 #            starttime = datetime.datetime.strftime(starttime,"%Y/%m/%d")+' 00:00'
 #            endtime = datetime.datetime.strftime(endtime,"%Y/%m/%d")+' 23:59:59'
             starttime = starttime+' 00:00'
             endtime = endtime+' 23:59:59'
             exsql += ' and "addtime" between "%s" and "%s"'%(starttime,endtime)
+        #str(title).strip()清除空格
+        newtitle = self.strhand(title)
+        if  newtitle != '':
+            exsql += ' and "title" like "%%%s%%" escape "|" '%newtitle        
         exsql += ' order by "addtime" desc limit %d,10'%initid
-        print exsql
+#        print exsql
 
         cu = iddb.cursor()
         cu.execute(exsql)
@@ -93,18 +106,21 @@ class myrss(object):
     def selectthemecount(self,group='',title='',starttime='',endtime=''):
         #计算有效主题数
 #        print group,title,starttime,endtime
-#        print str(title).strip()
+#        print str(title).strip() != ''
         exsql = 'select count("title") from theme where "flag"=1'
         if group != '':
             exsql += ' and "group"="%s"'%group
-        elif str(title).strip() != '':
-            exsql += ' and "title" like "%%%s%%"'%str(title).strip()
-        elif starttime != '' and endtime != '':
+        #bug6 多条件查询结果不正确
+        if starttime != '' and endtime != '':
 #            starttime = datetime.datetime.strftime(starttime,"%Y/%m/%d")+' 00:00'
 #            endtime = datetime.datetime.strftime(endtime,"%Y/%m/%d")+' 23:59:59'   
             starttime = starttime+' 00:00'
             endtime = endtime+' 23:59:59'
             exsql += ' and "addtime" between "%s" and "%s"'%(starttime,endtime)
+        #str(title).strip()清除空格 #sql加上分隔符escape………
+        newtitle = self.strhand(title)
+        if newtitle != '':
+            exsql += ' and "title" like "%%%s%%" escape "|"'%newtitle       
         cu = iddb.cursor()
         cu.execute(exsql)
         qs =cu.fetchone()
@@ -143,5 +159,5 @@ if __name__ == '__main__':
     x=myrss()
 #    print x.selecttheme(theme)
 #    print x.selecttop10()
-    print x.selectpagedata(10,None,'为什么',None,None)
+    print x.selectpagedata(10,'xx','为什么','','')
 

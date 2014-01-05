@@ -58,6 +58,7 @@ class TestDialog(QMainWindow,QDialog):
 
     def loadtable(self):
         db = self.db
+#        print self.themecount
 #       pageid 使用全局变量
 #        pageid = self.pageid
         if self.query:
@@ -86,30 +87,37 @@ class TestDialog(QMainWindow,QDialog):
 
             
     def prepage(self):
-        if self.queryid==10 or self.pageid==10:
+        if self.query:
+            if self.queryid==10:
                 print u'没有上一页'
-        elif self.query:
-            self.queryid -= 20
-            self.mainUi.tableWidget.clearContents()            
-            self.loadtable()
+            else:
+                self.queryid -= 20
+                self.mainUi.tableWidget.clearContents()            
+                self.loadtable()
         else:
+            if self.pageid==10:
+                print u'没有上一页'
             #显示上一页 既显示前十条 开始id应该从前二十开始
-            self.pageid -= 20
-            self.mainUi.tableWidget.clearContents()            
-            self.loadtable()
+            else:
+                self.pageid -= 20
+                self.mainUi.tableWidget.clearContents()            
+                self.loadtable()
         
 
     def nextpage(self):
         #bug4 查询后点击下一页无响应
-        if self.queryid >= self.themecount or self.pageid >= self.themecount:
-            print u'没有下一页'
-            return
-#        elif  self.pageid >= self.themecount:
-#            print u'没有下一页'
-#            return
-        
-        self.mainUi.tableWidget.clearContents()
-        self.loadtable()
+        if self.query:
+            if self.queryid >= self.themecount:
+                print u'没有下一页'
+            else:
+                self.mainUi.tableWidget.clearContents()
+                self.loadtable()
+        else:
+            if self.pageid >= self.themecount:
+                print u'没有下一页'
+            else:
+                self.mainUi.tableWidget.clearContents()
+                self.loadtable()
 
     def startpage(self):
         if self.query:
